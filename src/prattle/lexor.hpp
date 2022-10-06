@@ -7,6 +7,9 @@
 // table-based scanning
 
 namespace prattle {
+
+class iLexorInput;
+
 namespace lex {
 
 class kernel {
@@ -145,13 +148,14 @@ public:
    void error(const std::string& msg);
 
 protected:
-   lexorBase(const iScanStrategy& defaultStrat, const char *pThumb);
+   lexorBase(const iScanStrategy& defaultStrat, iLexorInput& src);
    size_t _getToken() const { return m_k.token; }
 
 private:
    kernel m_k;
    const iScanStrategy *m_pDefStrat;
    const iScanStrategy *m_pLastStrat;
+   iLexorInput& m_lin;
 };
 
 } // namespace lex

@@ -1,7 +1,9 @@
 #include "../prattle/lexor.hpp"
+#include "../prattle/loader.hpp"
 #include <sstream>
 #include <stdexcept>
 
+using namespace prattle;
 using namespace prattle::lex;
 
 namespace {
@@ -130,8 +132,8 @@ public:
       kWord,
    };
 
-   testLexor(const iScanStrategy& defaultStrat, const char *pThumb)
-   : lexorBase(defaultStrat,pThumb) {}
+   testLexor(const iScanStrategy& defaultStrat, iLexorInput& src)
+   : lexorBase(defaultStrat,src) {}
 
    tokens getToken() const { return (tokens)_getToken(); }
 };
@@ -190,7 +192,8 @@ void testLexor_()
    enss.append(eoiss);
    enss.append(wdss);
 
-   testLexor l(tlss,copy.c_str());
+   memorySource mSrc(copy.c_str());
+   testLexor l(tlss,mSrc);
    l.demandAndEat(testLexor::kEntity, enss);
    l.demandAndEat(testLexor::kLBrace, enss);
    l.demandAndEat(testLexor::kActions, enss);

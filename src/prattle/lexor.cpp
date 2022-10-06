@@ -1,4 +1,5 @@
 #include "lexor.hpp"
+#include "loader.hpp"
 #include <cstring>
 #include <sstream>
 
@@ -214,11 +215,12 @@ void lexorBase::error(const std::string& msg)
    throw std::runtime_error(msg.c_str());
 }
 
-lexorBase::lexorBase(const iScanStrategy& defaultStrat, const char *pThumb)
+lexorBase::lexorBase(const iScanStrategy& defaultStrat, iLexorInput& src)
 : m_pDefStrat(&defaultStrat)
 , m_pLastStrat(&defaultStrat)
+, m_lin(src)
 {
-   m_k.pThumb = pThumb;
+   m_k.pThumb = src.getContents();
    advance();
 }
 
