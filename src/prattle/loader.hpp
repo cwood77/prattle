@@ -20,9 +20,6 @@ private:
    const char *m_pThumb;
 };
 
-class fileSource : public iLexorInput {
-};
-
 class fileLoader {
 public:
    static iLexorInput *load(const std::string& path);
