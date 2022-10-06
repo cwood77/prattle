@@ -6,105 +6,21 @@ using namespace prattle::lex;
 
 namespace {
 
-class testLexor : public lexorBase {
-public:
-   enum tokens {
-      kLBrace = kFirstDerivedToken,
-      kRBrace,
-      kEntity,
-      kActions,
-      kComment,
-      kWord,
-   };
+// =====================================================================================
 
-   testLexor(const iScanStrategy& defaultStrat, const char *pThumb)
-   : lexorBase(defaultStrat,pThumb) {}
-
-   tokens getToken() const { return (tokens)_getToken(); }
-};
-
-static const lexorSetEntry commonLs[] = {
-   { lexorSetEntry::kPunctuation,  "_#", testLexor::kComment, "comment" },
-   { lexorSetEntry::kPunctuation,  NULL },
-};
-
-static const lexorSetEntry topLevelLs[] = {
-   { lexorSetEntry::kAlphanumeric, "_entity", testLexor::kEntity, "entity" },
-   { lexorSetEntry::kPunctuation,  NULL },
-};
-
-static const lexorSetEntry entityLs[] = {
-   { lexorSetEntry::kPunctuation,  "{",       testLexor::kLBrace,  "left brace"  },
-   { lexorSetEntry::kPunctuation,  "}",       testLexor::kRBrace,  "right brace" },
-   { lexorSetEntry::kAlphanumeric, "actions", testLexor::kActions, "actions"     },
-   { lexorSetEntry::kPunctuation,  NULL },
-};
-
-void testLexor_()
+void testStrategies()
 {
-   std::stringstream in;
-   in
-      << "_entity {"    << std::endl
-      << "   actions {" << std::endl
-      << "      word"   << std::endl
-      << "   }"         << std::endl
-      << "}"            << std::endl
-   ;
-   std::string copy = in.str();
-
-   whitespaceScanStrategy wss;
-   newlineScanStrategy nlss;
-   eoiScanStrategy eoiss;
-   wordScanStrategy wdss(testLexor::kWord);
-
-   lexorSet _tlls(commonLs);
-   _tlls.add(topLevelLs);
-   scanSetStrategy _tlsss(_tlls);
-   compositeScanStrategy tlss;
-   tlss.append(_tlsss);
-   tlss.append(wss);
-   tlss.append(nlss);
-   tlss.append(eoiss);
-   tlss.append(wdss);
-
-   lexorSet _enls(commonLs);
-   _enls.add(entityLs);
-   scanSetStrategy _ensss(_enls);
-   compositeScanStrategy enss;
-   enss.append(_ensss);
-   enss.append(wss);
-   enss.append(nlss);
-   enss.append(eoiss);
-   enss.append(wdss);
-
-   testLexor l(tlss,copy.c_str());
-   l.demandAndEat(testLexor::kEntity, enss);
-   l.demandAndEat(testLexor::kLBrace, enss);
-   l.demandAndEat(testLexor::kActions, enss);
-   l.demandAndEat(testLexor::kLBrace, enss);
-   l.demand(testLexor::kWord);
-   if(l.getLexeme() != "word")
-      throw std::runtime_error("fail");
-   l.advance(enss);
-   l.demandAndEat(testLexor::kRBrace, enss);
-   l.demandAndEat(testLexor::kRBrace);
-}
-
-} // anonymous namespace
-
-void lexorTest()
-{
-   const lexorSetEntry commonLexorSet[] = {
-      { lexorSetEntry::kPunctuation,  "_#",      1, "" },
-      { lexorSetEntry::kAlphanumeric, "_entity", 2, "" },
-      { lexorSetEntry::kPunctuation,  NULL,      0, "" }
+   const tokenTableEntry commonLexorSet[] = {
+      { tokenTableEntry::kPunctuation,  "_#",      1, "" },
+      { tokenTableEntry::kAlphanumeric, "_entity", 2, "" },
+      { tokenTableEntry::kPunctuation,  NULL,      0, "" }
    };
-   lexorSet cls(commonLexorSet);
-   scanSetStrategy ss_strat(cls);
+   tokenTable cls(commonLexorSet);
+   tokenTableStrategy ss_strat(cls);
    compositeScanStrategy strat;
    strat.append(ss_strat);
 
-   // scanSetStrategy
+   // tokenTableStrategy
    {
       kernel k;
       k.pThumb = "_#_#_entity_entity";
@@ -135,7 +51,7 @@ void lexorTest()
          throw std::runtime_error("fail");
    }
 
-   // scanSetStrategy + whitespaceScanStrategy collaboration
+   // tokenTableStrategy + whitespaceScanStrategy collaboration
    {
       kernel k;
       k.pThumb = "_entity _entity";
@@ -179,7 +95,7 @@ void lexorTest()
       whitespaceScanStrategy wss;
       newlineScanStrategy nlss;
       eoiScanStrategy eoiss;
-      wordScanStrategy wdss(17);
+      anyWordStrategy wdss(17);
       localStrat.append(wss);
       localStrat.append(nlss);
       localStrat.append(eoiss);
@@ -199,6 +115,100 @@ void lexorTest()
       if(lexorBase::kEOI != k.token)
          throw std::runtime_error("fail");
    }
+}
 
+// =====================================================================================
+
+class testLexor : public lexorBase {
+public:
+   enum tokens {
+      kLBrace = kFirstDerivedToken,
+      kRBrace,
+      kEntity,
+      kActions,
+      kComment,
+      kWord,
+   };
+
+   testLexor(const iScanStrategy& defaultStrat, const char *pThumb)
+   : lexorBase(defaultStrat,pThumb) {}
+
+   tokens getToken() const { return (tokens)_getToken(); }
+};
+
+static const tokenTableEntry commonLs[] = {
+   { tokenTableEntry::kPunctuation,  "_#", testLexor::kComment, "comment" },
+   { tokenTableEntry::kPunctuation,  NULL },
+};
+
+static const tokenTableEntry topLevelLs[] = {
+   { tokenTableEntry::kAlphanumeric, "_entity", testLexor::kEntity, "entity" },
+   { tokenTableEntry::kPunctuation,  NULL },
+};
+
+static const tokenTableEntry entityLs[] = {
+   { tokenTableEntry::kPunctuation,  "{",       testLexor::kLBrace,  "left brace"  },
+   { tokenTableEntry::kPunctuation,  "}",       testLexor::kRBrace,  "right brace" },
+   { tokenTableEntry::kAlphanumeric, "actions", testLexor::kActions, "actions"     },
+   { tokenTableEntry::kPunctuation,  NULL },
+};
+
+void testLexor_()
+{
+   std::stringstream in;
+   in
+      << "_entity {"    << std::endl
+      << "   actions {" << std::endl
+      << "      word"   << std::endl
+      << "   }"         << std::endl
+      << "}"            << std::endl
+   ;
+   std::string copy = in.str();
+
+   whitespaceScanStrategy wss;
+   newlineScanStrategy nlss;
+   eoiScanStrategy eoiss;
+   anyWordStrategy wdss(testLexor::kWord);
+
+   tokenTable _tlls(commonLs);
+   _tlls.add(topLevelLs);
+   tokenTableStrategy _tlsss(_tlls);
+   compositeScanStrategy tlss;
+   tlss.append(_tlsss);
+   tlss.append(wss);
+   tlss.append(nlss);
+   tlss.append(eoiss);
+   tlss.append(wdss);
+
+   tokenTable _enls(commonLs);
+   _enls.add(entityLs);
+   tokenTableStrategy _ensss(_enls);
+   compositeScanStrategy enss;
+   enss.append(_ensss);
+   enss.append(wss);
+   enss.append(nlss);
+   enss.append(eoiss);
+   enss.append(wdss);
+
+   testLexor l(tlss,copy.c_str());
+   l.demandAndEat(testLexor::kEntity, enss);
+   l.demandAndEat(testLexor::kLBrace, enss);
+   l.demandAndEat(testLexor::kActions, enss);
+   l.demandAndEat(testLexor::kLBrace, enss);
+   l.demand(testLexor::kWord);
+   if(l.getLexeme() != "word")
+      throw std::runtime_error("fail");
+   l.advance(enss);
+   l.demandAndEat(testLexor::kRBrace, enss);
+   l.demandAndEat(testLexor::kRBrace);
+}
+
+} // anonymous namespace
+
+// =====================================================================================
+
+void lexorTest()
+{
+   testStrategies();
    testLexor_();
 }

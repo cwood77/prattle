@@ -3,6 +3,9 @@
 #include <map>
 #include <string>
 
+// the lexor is composed of iScanStrategy instances, which can do free-form scanning or
+// table-based scanning
+
 namespace prattle {
 namespace lex {
 
@@ -28,6 +31,7 @@ public:
 class compositeScanStrategy : public iScanStrategy {
 public:
    void append(const iScanStrategy& next) { m_strats.push_back(&next); }
+
    virtual void scan(kernel& k) const;
    virtual std::string getTokenName(size_t t) const;
 
@@ -53,9 +57,10 @@ public:
    virtual std::string getTokenName(size_t t) const { return ""; }
 };
 
-class wordScanStrategy : public iScanStrategy {
+// classify any lexeme as this token
+class anyWordStrategy : public iScanStrategy {
 public:
-   explicit wordScanStrategy(size_t token) : m_token(token) {}
+   explicit anyWordStrategy(size_t token) : m_token(token) {}
    virtual void scan(kernel& k) const;
    virtual std::string getTokenName(size_t t) const { return ""; }
 
@@ -63,7 +68,7 @@ private:
    const size_t m_token;
 };
 
-struct lexorSetEntry {
+struct tokenTableEntry {
 public:
    enum termination {
       kAlphanumeric,
@@ -77,28 +82,43 @@ public:
    size_t flags;
 };
 
-class lexorSet {
+class tokenTable {
 public:
-   explicit lexorSet(const lexorSetEntry *pTable) { add(pTable); }
-   void add(const lexorSetEntry *pTable);
+   explicit tokenTable(const tokenTableEntry *pTable) { add(pTable); }
+   void add(const tokenTableEntry *pTable);
 
-   std::map<std::string,const lexorSetEntry*> alphanumerics;
-   std::map<std::string,const lexorSetEntry*> punctuations;
+   std::map<std::string,const tokenTableEntry*> alphanumerics;
+   std::map<std::string,const tokenTableEntry*> punctuations;
    std::map<size_t,std::string> tokenNames;
 };
 
-class scanSetStrategy : public iScanStrategy {
+class tokenTableStrategy : public iScanStrategy {
 public:
-   explicit scanSetStrategy(const lexorSet& s) : m_s(s) {}
+   explicit tokenTableStrategy(const tokenTable& s) : m_s(s) {}
 
    virtual void scan(kernel& k) const;
    virtual std::string getTokenName(size_t t) const;
 
 private:
-   const lexorSetEntry *matchesPunc(const char *pThumb) const;
-   void updateKernel(const lexorSetEntry& e, kernel& k) const;
+   const tokenTableEntry *matchesPunc(const char *pThumb) const;
+   void updateKernel(const tokenTableEntry& e, kernel& k) const;
 
-   const lexorSet& m_s;
+   const tokenTable& m_s;
+};
+
+class standardStrategy : public compositeScanStrategy {
+public:
+   explicit standardStrategy(const tokenTable& s);
+   standardStrategy(const tokenTable& s, size_t anyWordToken);
+
+private:
+   void setup(bool useAnyWord);
+
+   whitespaceScanStrategy m_wss;
+   newlineScanStrategy m_nlss;
+   eoiScanStrategy m_eoiss;
+   tokenTableStrategy m_tss;
+   anyWordStrategy m_aws;
 };
 
 class lexorBase {

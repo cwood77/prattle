@@ -81,7 +81,7 @@ void eoiScanStrategy::scan(kernel& k) const
       k.token = lexorBase::kEOI;
 }
 
-void wordScanStrategy::scan(kernel& k) const
+void anyWordStrategy::scan(kernel& k) const
 {
    if(k.token != lexorBase::kUnknown)
       return;
@@ -94,13 +94,13 @@ void wordScanStrategy::scan(kernel& k) const
    k.lexeme = std::string(pStart,k.pThumb-pStart);
 }
 
-void lexorSet::add(const lexorSetEntry *pTable)
+void tokenTable::add(const tokenTableEntry *pTable)
 {
-   const lexorSetEntry *pThumb = pTable;
+   const tokenTableEntry *pThumb = pTable;
    while(pThumb->pLexeme)
    {
       auto *pMap = &alphanumerics;
-      if(pThumb->term == lexorSetEntry::kPunctuation)
+      if(pThumb->term == tokenTableEntry::kPunctuation)
          pMap = &punctuations;
 
       (*pMap)[pThumb->pLexeme] = pThumb;
@@ -110,7 +110,7 @@ void lexorSet::add(const lexorSetEntry *pTable)
    }
 }
 
-void scanSetStrategy::scan(kernel& k) const
+void tokenTableStrategy::scan(kernel& k) const
 {
    if(k.token != lexorBase::kUnknown)
       return;
@@ -143,7 +143,7 @@ void scanSetStrategy::scan(kernel& k) const
    }
 }
 
-std::string scanSetStrategy::getTokenName(size_t t) const
+std::string tokenTableStrategy::getTokenName(size_t t) const
 {
    auto it = m_s.tokenNames.find(t);
    if(it == m_s.tokenNames.end())
@@ -151,7 +151,7 @@ std::string scanSetStrategy::getTokenName(size_t t) const
    return it->second;
 }
 
-const lexorSetEntry *scanSetStrategy::matchesPunc(const char *pThumb) const
+const tokenTableEntry *tokenTableStrategy::matchesPunc(const char *pThumb) const
 {
    for(auto it=m_s.punctuations.rbegin();it!=m_s.punctuations.rend();++it)
       if(::strncmp(pThumb,it->first.c_str(),it->first.length())==0)
@@ -160,11 +160,35 @@ const lexorSetEntry *scanSetStrategy::matchesPunc(const char *pThumb) const
    return NULL;
 }
 
-void scanSetStrategy::updateKernel(const lexorSetEntry& e, kernel& k) const
+void tokenTableStrategy::updateKernel(const tokenTableEntry& e, kernel& k) const
 {
    k.pThumb += ::strlen(e.pLexeme);
    k.token = e.token;
    k.lexeme = e.pLexeme;
+}
+
+standardStrategy::standardStrategy(const tokenTable& s)
+: m_tss(s)
+, m_aws(0)
+{
+   setup(/*useAnyWord*/false);
+}
+
+standardStrategy::standardStrategy(const tokenTable& s, size_t anyWordToken)
+: m_tss(s)
+, m_aws(anyWordToken)
+{
+   setup(/*useAnyWord*/true);
+}
+
+void standardStrategy::setup(bool useAnyWord)
+{
+   append(m_wss);
+   append(m_nlss);
+   append(m_eoiss);
+   append(m_tss);
+   if(useAnyWord)
+      append(m_aws);
 }
 
 void lexorBase::advance(const iScanStrategy& s)
