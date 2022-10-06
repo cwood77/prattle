@@ -1,6 +1,7 @@
 #pragma once
-#include <string>
 #include <map>
+#include <stdexcept>
+#include <string>
 #include <typeinfo>
 
 namespace prattle {
@@ -20,8 +21,16 @@ public:
    config() {}
    ~config();
 
-   template<class T> T *fetch(const std::string& name = "");
-   template<class T> T& demand(const std::string& name = "");
+   //template<class T> T *fetch(const std::string& name = "");
+
+   template<class T> T& demand(const std::string& name = "")
+   {
+      auto k = makeKey<T>(name);
+      auto it = m_settings.find(k);
+      if(it == m_settings.end())
+         throw std::runtime_error("cannot find " + k);
+      return *dynamic_cast<T*>(it->second);
+   }
 
    template<class T>
    T& createOrFetch(const std::string& name = "")

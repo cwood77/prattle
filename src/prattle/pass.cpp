@@ -53,7 +53,7 @@ passRunChain::~passRunChain()
       delete pP;
 }
 
-void passRunChain::run(config& c, void*& pIr)
+void passRunChain::run(config& c, void *pIr)
 {
    for(auto *pP : passes)
       pP->run(c,pIr);
@@ -74,7 +74,7 @@ void passScheduler::inflate(const passSchedule& s, passRunChain& c)
       c.passes.push_back(pPi->create());
 }
 
-void passManager::run(config& c, passRunChain& rc, void*& pIr)
+void passManager::run(config& c, passRunChain& rc, void *pIr)
 {
    rc.run(c,pIr);
 }

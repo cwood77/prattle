@@ -13,7 +13,7 @@ namespace pass {
 class iPass {
 public:
    virtual ~iPass() {}
-   virtual void run(config& c, void*& pIr) = 0;
+   virtual void run(config& c, void *pIr) = 0;
 };
 
 class iPassInfo {
@@ -90,7 +90,7 @@ class passRunChain {
 public:
    ~passRunChain();
 
-   void run(config& c, void*& pIr);
+   void run(config& c, void *pIr);
 
    std::list<iPass*> passes;
 };
@@ -103,7 +103,9 @@ public:
 
 class passManager {
 public:
-   void run(config& c, passRunChain& rc, void*& pIr);
+   void run(config& c, passRunChain& rc, void *pIr);
+   void run(config& c, passRunChain& rc)
+   { void *pUnused = NULL; run(c,rc,pUnused); }
 };
 
 class iTarget {

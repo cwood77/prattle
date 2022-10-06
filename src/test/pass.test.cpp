@@ -11,9 +11,9 @@ namespace {
 
 class dummyPass : public iPass {
 public:
-   virtual void run(config& c, void*& _pIr)
+   virtual void run(config& c, void *_pIr)
    {
-      auto *pIr = (size_t*&)_pIr;
+      auto *pIr = (size_t*)_pIr;
       *pIr += 2;
    }
 };
@@ -34,7 +34,7 @@ void passManagerTest()
    config cfg;
    size_t ir = 4;
    size_t *pIr = &ir;
-   passManager().run(cfg,rc,(void*&)pIr);
+   passManager().run(cfg,rc,pIr);
    if(ir != 6)
       throw std::runtime_error("fail");
 }
