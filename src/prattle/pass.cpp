@@ -1,5 +1,6 @@
 #include "pass.hpp"
 #include <set>
+#include <stdexcept>
 
 namespace prattle {
 namespace pass {
@@ -76,6 +77,51 @@ void passScheduler::inflate(const passSchedule& s, passRunChain& c)
 void passManager::run(config& c, passRunChain& rc, void*& pIr)
 {
    rc.run(c,pIr);
+}
+
+targetCatalog& targetCatalog::get()
+{
+   static targetCatalog the;
+   return the;
+}
+
+void targetCatalog::publish(const iTargetInfo& t)
+{
+   m_cat[t.getName()] = &t;
+}
+
+iTarget *targetCatalog::create(const std::string& name)
+{
+   auto *pT = m_cat[name];
+   if(!pT)
+      throw std::runtime_error("target not found: " + name);
+   return pT->create();
+}
+
+targetChain::~targetChain()
+{
+   for(auto *pTgt : tgts)
+      delete pTgt;
+}
+
+void targetChain::adjustPasses(passCatalog& c, passSchedule& s)
+{
+   for(auto *pTgt : tgts)
+      pTgt->adjustPasses(c,s);
+}
+
+void targetChainBuilder::build(config& c, targetCatalog& f, const std::string& finalTarget, targetChain& tc)
+{
+   auto *pTgt = f.create(finalTarget);
+   while(true)
+   {
+      pTgt->configure(c);
+      tc.tgts.push_front(pTgt);
+      auto name = pTgt->getPredecessorTarget();
+      if(name.empty())
+         break;
+      pTgt = f.create(name);
+   }
 }
 
 } // namespace pass

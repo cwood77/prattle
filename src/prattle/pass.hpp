@@ -106,16 +106,64 @@ public:
    void run(config& c, passRunChain& rc, void*& pIr);
 };
 
-#if 0
 class iTarget {
 public:
+   virtual ~iTarget() {}
    virtual void configure(config& c) = 0;
+   virtual std::string getPredecessorTarget() = 0;
    virtual void adjustPasses(passCatalog& c, passSchedule& s) = 0;
 };
 
-class targetFactory {
+class iTargetInfo {
 public:
+   virtual std::string getName() const = 0;
+   virtual iTarget *create() const = 0;
+};
+
+template<class T>
+class targetInfo : public iTargetInfo {
+public:
+   explicit targetInfo(const std::string& name)
+   : m_name(name) {}
+
+   virtual std::string getName() const { return m_name; }
+   virtual iTarget *create() const { return new T(); }
+
+private:
+   std::string m_name;
+};
+
+class targetCatalog {
+public:
+   static targetCatalog& get();
+
+   void publish(const iTargetInfo& t);
    iTarget *create(const std::string& name);
+
+private:
+   std::map<std::string,const iTargetInfo*> m_cat;
+};
+
+template<class T>
+class autoTargetInfo : public targetInfo<T> {
+public:
+   explicit autoTargetInfo(const std::string& name)
+   : targetInfo<T>(name)
+   { targetCatalog::get().publish(*this); }
+};
+
+class targetChain {
+public:
+   ~targetChain();
+
+   void adjustPasses(passCatalog& c, passSchedule& s);
+
+   std::list<iTarget*> tgts;
+};
+
+class targetChainBuilder {
+public:
+   void build(config& c, targetCatalog& f, const std::string& finalTarget, targetChain& tc);
 };
 
 // simple "steps" outside the passManager??
@@ -125,7 +173,6 @@ public:
 // - table generation pass
 // - obfuscation pass
 //   ....
-#endif
 
 } // namespace pass
 } // namespace prattle
