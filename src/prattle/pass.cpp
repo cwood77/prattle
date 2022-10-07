@@ -37,6 +37,14 @@ phasePassCatalog passCatalog::getPhase(const std::string& phase)
    return phasePassCatalog(phase,*this);
 }
 
+const iPassInfo& passCatalog::_demand(const std::string& name)
+{
+   auto it = m_catalog.find(name);
+   if(it == m_catalog.end())
+      throw std::runtime_error("pass not found");
+   return *it->second;
+}
+
 void phasePassCatalog::getByPriority(std::list<const iPassInfo*>& order)
 {
    std::set<const iPassInfo*,prioritySorter> s;

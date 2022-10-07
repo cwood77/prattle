@@ -47,7 +47,7 @@ private:
 
 class node : public attributable {
 public:
-   node() : m_pParent(NULL), lineNumber(0) {}
+   node() : lineNumber(0), m_pParent(NULL) {}
    virtual ~node();
 
    void appendChild(node& n);

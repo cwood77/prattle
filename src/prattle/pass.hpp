@@ -48,9 +48,12 @@ public:
 
    void publish(const iPassInfo& p);
    phasePassCatalog getPhase(const std::string& phase);
-   const iPassInfo& demand(const std::string& name);
+
+   template<class T> const iPassInfo& demand() { return _demand(typeid(T).name()); }
 
 private:
+   const iPassInfo& _demand(const std::string& name);
+
    std::map<std::string,const iPassInfo*> m_catalog;
 
 friend class phasePassCatalog;
