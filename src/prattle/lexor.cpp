@@ -203,7 +203,7 @@ void lexorBase::expected(const std::vector<size_t>& tokens)
    {
       if(!first)
          msg << ", ";
-      msg << s;
+      msg << getTokenName(s);
       first = false;
    }
 
@@ -221,7 +221,7 @@ void lexorBase::error(const std::string& msg)
    stream << "  current lexeme is " << getLexeme() << std::endl;
 
    bool truncated = (::strlen(m_k.pThumb) > 10);
-   std::string hint(m_k.pThumb,truncated ? 10 : ::strlen(m_k.pThumb));
+   std::string hint(m_k.pThumb, truncated ? 10 : ::strlen(m_k.pThumb));
    if(truncated)
       hint += "...";
    stream << "  current text is " << hint << std::endl;
