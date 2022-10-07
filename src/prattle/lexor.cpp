@@ -191,10 +191,10 @@ void lexorBase::advance(const iScanStrategy& s)
 void lexorBase::demand(size_t token)
 {
    if(getToken() != token)
-      expected(std::vector<std::string>({ token }));
+      expected({token});
 }
 
-void lexorBase::expected(const std::vector<std::string>& tokens)
+void lexorBase::expected(const std::vector<size_t>& tokens)
 {
    std::stringstream msg;
    msg << "expected ";
@@ -224,7 +224,7 @@ void lexorBase::error(const std::string& msg)
    std::string hint(m_k.pThumb,truncated ? 10 : ::strlen(m_k.pThumb));
    if(truncated)
       hint += "...";
-   stream << "  current text is " << truncated << std::endl;
+   stream << "  current text is " << hint << std::endl;
 
    throw std::runtime_error(stream.str());
 }

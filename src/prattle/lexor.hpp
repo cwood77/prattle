@@ -137,7 +137,7 @@ public:
    void demandAndEat(size_t token, const iScanStrategy& s) { demand(token); advance(s); }
    void demandAndEat(size_t token) { demandAndEat(token,*m_pDefStrat); }
 
-   void expected(const std::vector<std::string>& tokens);
+   void expected(const std::vector<size_t>& tokens);
    void error(const std::string& msg);
 
 protected:
