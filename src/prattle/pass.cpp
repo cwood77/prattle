@@ -37,7 +37,7 @@ phasePassCatalog passCatalog::getPhase(const std::string& phase)
    return phasePassCatalog(phase,*this);
 }
 
-const iPassInfo& passCatalog::_demand(const std::string& name)
+const iPassInfo& passCatalog::demand(const std::string& name)
 {
    auto it = m_catalog.find(name);
    if(it == m_catalog.end())

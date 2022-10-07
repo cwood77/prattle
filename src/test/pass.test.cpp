@@ -54,7 +54,11 @@ class dotTarget : public iTarget {
 public:
    virtual void configure(config& c) {}
    virtual std::string getPredecessorTarget() { return "typical"; }
-   virtual void adjustPasses(passCatalog& c, passSchedule& s) {}
+   virtual void adjustPasses(passCatalog& c, passSchedule& s)
+   {
+      s.append(c.demand<dummyPass>());
+      s.append(c.demand(typeid(dummyPass).name()));
+   }
 };
 
 autoTargetInfo<dotTarget> gDotTarget("dot");
