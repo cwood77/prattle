@@ -40,6 +40,7 @@ TEST_SRC = \
 	$(PRATTLE_SRC) \
 	src/test/lexor.test.cpp \
 	src/test/main.cpp \
+	src/test/node.test.cpp \
 	src/test/pass.test.cpp \
 
 TEST_DEBUG_OBJ = $(subst src,$(OBJ_DIR)/debug,$(patsubst %.cpp,%.o,$(TEST_SRC)))
