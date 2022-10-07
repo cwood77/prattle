@@ -12,15 +12,6 @@ void kernel::unclassify()
    lexeme = "";
 }
 
-std::string kernel::toString() const
-{
-   std::stringstream stream;
-
-   stream << "k:" << pThumb << "|" << token << "|" << std::endl;
-
-   return stream.str();
-}
-
 void compositeScanStrategy::scan(kernel& k) const
 {
    bool restart;
@@ -45,18 +36,6 @@ void compositeScanStrategy::scan(kernel& k) const
    while(restart);
 }
 
-std::string compositeScanStrategy::getTokenName(size_t t) const
-{
-   for(auto *pStrat : m_strats)
-   {
-      auto rVal = pStrat->getTokenName(t);
-      if(!rVal.empty())
-         return rVal;
-   }
-
-   throw std::runtime_error("unknown token");
-}
-
 void whitespaceScanStrategy::scan(kernel& k) const
 {
    if(k.token != lexorBase::kUnknown)
@@ -70,7 +49,9 @@ void newlineScanStrategy::scan(kernel& k) const
    if(k.token != lexorBase::kUnknown)
       return;
 
-   for(;*k.pThumb=='\r'||*k.pThumb=='\n';++k.pThumb);
+   for(;*k.pThumb=='\r'||*k.pThumb=='\n';++k.pThumb)
+      if(*k.pThumb=='\n')
+         k.lineNumber++;
 }
 
 void eoiScanStrategy::scan(kernel& k) const
@@ -95,23 +76,22 @@ void anyWordStrategy::scan(kernel& k) const
    k.lexeme = std::string(pStart,k.pThumb-pStart);
 }
 
-void tokenTable::add(const tokenTableEntry *pTable)
+void lexemeTable::add(const lexemeTableEntry *pTable)
 {
-   const tokenTableEntry *pThumb = pTable;
+   const lexemeTableEntry *pThumb = pTable;
    while(pThumb->pLexeme)
    {
       auto *pMap = &alphanumerics;
-      if(pThumb->term == tokenTableEntry::kPunctuation)
+      if(pThumb->term == lexemeTableEntry::kPunctuation)
          pMap = &punctuations;
 
       (*pMap)[pThumb->pLexeme] = pThumb;
-      tokenNames[pThumb->token] = pThumb->pTokenName;
 
       pThumb++;
    }
 }
 
-void tokenTableStrategy::scan(kernel& k) const
+void lexemeTableStrategy::scan(kernel& k) const
 {
    if(k.token != lexorBase::kUnknown)
       return;
@@ -144,15 +124,7 @@ void tokenTableStrategy::scan(kernel& k) const
    }
 }
 
-std::string tokenTableStrategy::getTokenName(size_t t) const
-{
-   auto it = m_s.tokenNames.find(t);
-   if(it == m_s.tokenNames.end())
-      throw std::runtime_error("ise - getTokenName");
-   return it->second;
-}
-
-const tokenTableEntry *tokenTableStrategy::matchesPunc(const char *pThumb) const
+const lexemeTableEntry *lexemeTableStrategy::matchesPunc(const char *pThumb) const
 {
    for(auto it=m_s.punctuations.rbegin();it!=m_s.punctuations.rend();++it)
       if(::strncmp(pThumb,it->first.c_str(),it->first.length())==0)
@@ -161,21 +133,21 @@ const tokenTableEntry *tokenTableStrategy::matchesPunc(const char *pThumb) const
    return NULL;
 }
 
-void tokenTableStrategy::updateKernel(const tokenTableEntry& e, kernel& k) const
+void lexemeTableStrategy::updateKernel(const lexemeTableEntry& e, kernel& k) const
 {
    k.pThumb += ::strlen(e.pLexeme);
    k.token = e.token;
    k.lexeme = e.pLexeme;
 }
 
-standardStrategy::standardStrategy(const tokenTable& s)
+standardStrategy::standardStrategy(const lexemeTable& s)
 : m_tss(s)
 , m_aws(0)
 {
    setup(/*useAnyWord*/false);
 }
 
-standardStrategy::standardStrategy(const tokenTable& s, size_t anyWordToken)
+standardStrategy::standardStrategy(const lexemeTable& s, size_t anyWordToken)
 : m_tss(s)
 , m_aws(anyWordToken)
 {
@@ -192,36 +164,85 @@ void standardStrategy::setup(bool useAnyWord)
       append(m_aws);
 }
 
+std::string lexorBase::getTokenName(size_t t)
+{
+   auto it = m_tokenNames.find(t);
+   if(it == m_tokenNames.end())
+      throw std::runtime_error("token name unknown");
+   return it->second;
+}
+
+std::string lexorBase::getFileName() const
+{
+   return m_lin.getFileName();
+}
+
+void lexorBase::scanToEndOfLine()
+{
+   for(;*m_k.pThumb!=0&&*m_k.pThumb!='\r'&&*m_k.pThumb!='\n';++m_k.pThumb);
+}
+
 void lexorBase::advance(const iScanStrategy& s)
 {
    m_k.unclassify();
-   m_pLastStrat = &s;
-   m_pLastStrat->scan(m_k);
+   s.scan(m_k);
 }
 
 void lexorBase::demand(size_t token)
 {
-   if(_getToken() != token)
+   if(getToken() != token)
+      expected(std::vector<std::string>({ token }));
+}
+
+void lexorBase::expected(const std::vector<std::string>& tokens)
+{
+   std::stringstream msg;
+   msg << "expected ";
+   bool first = true;
+   for(auto& s : tokens)
    {
-      std::stringstream msg;
-      msg << "expected " << getTokenName(token);
-      msg << ", but got " << getTokenName(m_k.token);
-      error(msg.str());
+      if(!first)
+         msg << ", ";
+      msg << s;
+      first = false;
    }
+
+   error(msg.str());
 }
 
 void lexorBase::error(const std::string& msg)
 {
-   throw std::runtime_error(msg.c_str());
+   std::stringstream stream;
+
+   stream << msg << std::endl;
+   stream << "  in " << getFileName() << std::endl;
+   stream << "  at " << getLineNumber() << std::endl;
+   stream << "  current token is " << getTokenName(getToken()) << std::endl;
+   stream << "  current lexeme is " << getLexeme() << std::endl;
+
+   bool truncated = (::strlen(m_k.pThumb) > 10);
+   std::string hint(m_k.pThumb,truncated ? 10 : ::strlen(m_k.pThumb));
+   if(truncated)
+      hint += "...";
+   stream << "  current text is " << truncated << std::endl;
+
+   throw std::runtime_error(stream.str());
 }
 
 lexorBase::lexorBase(const iScanStrategy& defaultStrat, iLexorInput& src)
 : m_pDefStrat(&defaultStrat)
-, m_pLastStrat(&defaultStrat)
 , m_lin(src)
 {
+   publishToken(kUnknown,"<unknown>"     );
+   publishToken(kEOI,    "<end of input>");
+
    m_k.pThumb = src.getContents();
    advance();
+}
+
+void lexorBase::publishToken(size_t t, const char *name)
+{
+   m_tokenNames[t] = name;
 }
 
 } // namespace lex

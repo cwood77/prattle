@@ -12,17 +12,17 @@ namespace {
 
 void testStrategies()
 {
-   const tokenTableEntry commonLexorSet[] = {
-      { tokenTableEntry::kPunctuation,  "_#",      1, "" },
-      { tokenTableEntry::kAlphanumeric, "_entity", 2, "" },
-      { tokenTableEntry::kPunctuation,  NULL,      0, "" }
+   const lexemeTableEntry commonLexorSet[] = {
+      { lexemeTableEntry::kPunctuation,  "_#",      1 },
+      { lexemeTableEntry::kAlphanumeric, "_entity", 2 },
+      { lexemeTableEntry::kPunctuation,  NULL,      0 }
    };
-   tokenTable cls(commonLexorSet);
-   tokenTableStrategy ss_strat(cls);
+   lexemeTable cls(commonLexorSet);
+   lexemeTableStrategy ss_strat(cls);
    compositeScanStrategy strat;
    strat.append(ss_strat);
 
-   // tokenTableStrategy
+   // lexemeTableStrategy
    {
       kernel k;
       k.pThumb = "_#_#_entity_entity";
@@ -53,7 +53,7 @@ void testStrategies()
          throw std::runtime_error("fail");
    }
 
-   // tokenTableStrategy + whitespaceScanStrategy collaboration
+   // lexemeTableStrategy + whitespaceScanStrategy collaboration
    {
       kernel k;
       k.pThumb = "_entity _entity";
@@ -133,26 +133,27 @@ public:
    };
 
    testLexor(const iScanStrategy& defaultStrat, iLexorInput& src)
-   : lexorBase(defaultStrat,src) {}
-
-   tokens getToken() const { return (tokens)_getToken(); }
+   : lexorBase(defaultStrat,src)
+   {
+      // skipping token publish b/c I'm lazy
+   }
 };
 
-static const tokenTableEntry commonLs[] = {
-   { tokenTableEntry::kPunctuation,  "_#", testLexor::kComment, "comment" },
-   { tokenTableEntry::kPunctuation,  NULL },
+static const lexemeTableEntry commonLs[] = {
+   { lexemeTableEntry::kPunctuation,  "_#", testLexor::kComment },
+   { lexemeTableEntry::kPunctuation,  NULL },
 };
 
-static const tokenTableEntry topLevelLs[] = {
-   { tokenTableEntry::kAlphanumeric, "_entity", testLexor::kEntity, "entity" },
-   { tokenTableEntry::kPunctuation,  NULL },
+static const lexemeTableEntry topLevelLs[] = {
+   { lexemeTableEntry::kAlphanumeric, "_entity", testLexor::kEntity },
+   { lexemeTableEntry::kPunctuation,  NULL },
 };
 
-static const tokenTableEntry entityLs[] = {
-   { tokenTableEntry::kPunctuation,  "{",       testLexor::kLBrace,  "left brace"  },
-   { tokenTableEntry::kPunctuation,  "}",       testLexor::kRBrace,  "right brace" },
-   { tokenTableEntry::kAlphanumeric, "actions", testLexor::kActions, "actions"     },
-   { tokenTableEntry::kPunctuation,  NULL },
+static const lexemeTableEntry entityLs[] = {
+   { lexemeTableEntry::kPunctuation,  "{",       testLexor::kLBrace  },
+   { lexemeTableEntry::kPunctuation,  "}",       testLexor::kRBrace  },
+   { lexemeTableEntry::kAlphanumeric, "actions", testLexor::kActions },
+   { lexemeTableEntry::kPunctuation,  NULL },
 };
 
 void testLexor_()
@@ -172,9 +173,9 @@ void testLexor_()
    eoiScanStrategy eoiss;
    anyWordStrategy wdss(testLexor::kWord);
 
-   tokenTable _tlls(commonLs);
+   lexemeTable _tlls(commonLs);
    _tlls.add(topLevelLs);
-   tokenTableStrategy _tlsss(_tlls);
+   lexemeTableStrategy _tlsss(_tlls);
    compositeScanStrategy tlss;
    tlss.append(_tlsss);
    tlss.append(wss);
@@ -182,9 +183,9 @@ void testLexor_()
    tlss.append(eoiss);
    tlss.append(wdss);
 
-   tokenTable _enls(commonLs);
+   lexemeTable _enls(commonLs);
    _enls.add(entityLs);
-   tokenTableStrategy _ensss(_enls);
+   lexemeTableStrategy _ensss(_enls);
    compositeScanStrategy enss;
    enss.append(_ensss);
    enss.append(wss);
