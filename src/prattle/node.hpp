@@ -47,7 +47,7 @@ private:
 
 class node : public attributable {
 public:
-   node() : m_pParent(NULL) {}
+   node() : m_pParent(NULL), lineNumber(0) {}
    virtual ~node();
 
    void appendChild(node& n);
@@ -98,6 +98,10 @@ public:
 
    virtual const char *getName() const { return "node"; }
    virtual void acceptVisitor(iNodeVisitor& v) { v.visit(*this); }
+
+   // lexical breadcrumbs
+   std::string filePath;
+   unsigned long lineNumber;
 
 private:
    std::vector<node*> m_children;
