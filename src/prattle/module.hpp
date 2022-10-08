@@ -1,17 +1,12 @@
 #pragma once
 #define WIN32_LEAN_AND_MEAN
+#include "pass.hpp"
 #include "windows.h"
 #include <list>
 #include <set>
 #include <string>
 
 namespace prattle {
-namespace pass {
-
-class passCatalog;
-class targetCatalog;
-
-} // namespace pass
 namespace module {
 
 class iModule {
@@ -30,6 +25,18 @@ private:
    std::set<std::string> m_loaded;
    std::list<HINSTANCE> m_libs;
    std::list<iModule*> m_mods;
+};
+
+class loadingTargetFactory : public pass::iTargetFactory {
+public:
+   loadingTargetFactory(pass::targetCatalog& tCat, moduleLoader& mLdr)
+   : m_tCat(tCat), m_mLdr(mLdr) {}
+
+   virtual pass::iTarget *create(const std::string& name);
+
+private:
+   pass::targetCatalog& m_tCat;
+   moduleLoader& m_mLdr;
 };
 
 } // namespace module

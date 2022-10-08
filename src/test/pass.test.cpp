@@ -18,7 +18,7 @@ public:
    }
 };
 
-autoPassInfo<dummyPass> gDummyPass("0",0);
+cdwExportPass(dummyPass,"0",0);
 
 void passManagerTest()
 {
@@ -48,12 +48,12 @@ public:
    virtual void adjustPasses(passCatalog& c, passSchedule& s) {}
 };
 
-autoTargetInfo<typicalStuff> gTypicalTarget("typical");
+cdwExportTarget(typicalStuff);
 
 class dotTarget : public iTarget {
 public:
    virtual void configure(config& c) {}
-   virtual std::string getPredecessorTarget() { return "typical"; }
+   virtual std::string getPredecessorTarget() { return "typicalStuff"; }
    virtual void adjustPasses(passCatalog& c, passSchedule& s)
    {
       s.append(c.demand<dummyPass>());

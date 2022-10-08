@@ -10,10 +10,15 @@ class config;
 
 namespace pass {
 
+class iPassInfo;
+
 class iPass {
 public:
    virtual ~iPass() {}
+   const iPassInfo& getInfo() const { return *m_pInfo; }
    virtual void run(config& c, void *pIr) = 0;
+
+   const iPassInfo *m_pInfo;
 };
 
 class iPassInfo {
@@ -27,17 +32,18 @@ public:
 template<class T>
 class passInfo : public iPassInfo {
 public:
-   passInfo(const std::string& phase, unsigned long priority)
+   passInfo(const std::string& phase, unsigned long priority, const std::string& name)
    : m_phase(phase), m_priority(priority) {}
 
    virtual const std::string& getPhase() const { return m_phase; }
    virtual unsigned long getPriority() const { return m_priority; }
-   virtual std::string getName() const { return typeid(T).name(); }
-   virtual iPass *create() const { return new T(); }
+   virtual std::string getName() const { return m_name; }
+   virtual iPass *create() const { T *p =  new T(); p->m_pInfo = this; return p; }
 
 private:
    std::string m_phase;
    unsigned long m_priority;
+   std::string m_name;
 };
 
 class phasePassCatalog;
@@ -74,10 +80,13 @@ private:
 template<class T>
 class autoPassInfo : public passInfo<T> {
 public:
-   autoPassInfo(const std::string& phase, unsigned long priority)
-   : passInfo<T>(phase,priority)
+   autoPassInfo(const std::string& phase, unsigned long priority, const std::string& name)
+   : passInfo<T>(phase,priority,name)
    { passCatalog::get().publish(*this); }
 };
+
+#define cdwExportPass(__name__,__phase__,__priority__) \
+   static autoPassInfo<__name__> g##__name__(__phase__,__priority__,#__name__);
 
 class passSchedule {
 public:
@@ -111,12 +120,17 @@ public:
    { void *pUnused = NULL; run(c,rc,pUnused); }
 };
 
+class iTargetInfo;
+
 class iTarget {
 public:
    virtual ~iTarget() {}
+   const iTargetInfo& getInfo() const { return *m_pInfo; }
    virtual void configure(config& c) = 0;
    virtual std::string getPredecessorTarget() = 0;
    virtual void adjustPasses(passCatalog& c, passSchedule& s) = 0;
+
+   const iTargetInfo *m_pInfo;
 };
 
 class iTargetInfo {
@@ -132,19 +146,25 @@ public:
    : m_name(name) {}
 
    virtual std::string getName() const { return m_name; }
-   virtual iTarget *create() const { return new T(); }
+   virtual iTarget *create() const { T *p = new T(); p->m_pInfo = this; return p; }
 
 private:
    std::string m_name;
 };
 
-class targetCatalog {
+class iTargetFactory {
+public:
+   virtual iTarget *create(const std::string& name) = 0;
+};
+
+class targetCatalog : public iTargetFactory {
 public:
    static targetCatalog& get();
 
    void publish(const iTargetInfo& t);
    void publishTo(targetCatalog& other);
-   iTarget *create(const std::string& name);
+   virtual iTarget *create(const std::string& name);
+   iTarget *tryCreate(const std::string& name);
 
 private:
    std::map<std::string,const iTargetInfo*> m_cat;
@@ -158,6 +178,9 @@ public:
    { targetCatalog::get().publish(*this); }
 };
 
+#define cdwExportTarget(__name__) \
+   static autoTargetInfo<__name__> g##__name__(#__name__);
+
 class targetChain {
 public:
    ~targetChain();
@@ -169,7 +192,7 @@ public:
 
 class targetChainBuilder {
 public:
-   void build(config& c, targetCatalog& f, const std::string& finalTarget, targetChain& tc);
+   void build(config& c, iTargetFactory& f, const std::string& finalTarget, targetChain& tc);
 };
 
 } // namespace pass

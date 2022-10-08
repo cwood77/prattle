@@ -1,4 +1,5 @@
 #include "pass.hpp"
+#include <iostream>
 #include <set>
 #include <stdexcept>
 
@@ -70,7 +71,10 @@ passRunChain::~passRunChain()
 void passRunChain::run(config& c, void *pIr)
 {
    for(auto *pP : passes)
+   {
+      std::cout << "running pass " << pP->getInfo().getName() << std::endl;
       pP->run(c,pIr);
+   }
 }
 
 void passScheduler::schedule(phasePassCatalog& c, passSchedule& s)
@@ -112,9 +116,17 @@ void targetCatalog::publishTo(targetCatalog& other)
 
 iTarget *targetCatalog::create(const std::string& name)
 {
-   auto *pT = m_cat[name];
+   auto *pT = tryCreate(name);
    if(!pT)
       throw std::runtime_error("target not found: " + name);
+   return pT;
+}
+
+iTarget *targetCatalog::tryCreate(const std::string& name)
+{
+   auto *pT = m_cat[name];
+   if(!pT)
+      return NULL;
    return pT->create();
 }
 
@@ -127,10 +139,13 @@ targetChain::~targetChain()
 void targetChain::adjustPasses(passCatalog& c, passSchedule& s)
 {
    for(auto *pTgt : tgts)
+   {
+      std::cout << "gathering passes from target " << pTgt->getInfo().getName() << std::endl;
       pTgt->adjustPasses(c,s);
+   }
 }
 
-void targetChainBuilder::build(config& c, targetCatalog& f, const std::string& finalTarget, targetChain& tc)
+void targetChainBuilder::build(config& c, iTargetFactory& f, const std::string& finalTarget, targetChain& tc)
 {
    auto *pTgt = f.create(finalTarget);
    while(true)

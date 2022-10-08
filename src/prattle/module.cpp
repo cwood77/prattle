@@ -42,5 +42,14 @@ void moduleLoader::collect(pass::passCatalog& p, pass::targetCatalog& t)
       pM->collect(p,t);
 }
 
+pass::iTarget *loadingTargetFactory::create(const std::string& name)
+{
+   auto *t = m_tCat.tryCreate(name);
+   if(t)
+      return t;
+   m_mLdr.tryLoad(name);
+   return m_tCat.create(name);
+}
+
 } // namespace module
 } // namespace prattle
