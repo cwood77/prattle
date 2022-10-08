@@ -47,6 +47,7 @@ public:
    static passCatalog& get();
 
    void publish(const iPassInfo& p);
+   void publishTo(passCatalog& other);
    phasePassCatalog getPhase(const std::string& phase);
 
    template<class T> const iPassInfo& demand() { return demand(typeid(T).name()); }
@@ -142,6 +143,7 @@ public:
    static targetCatalog& get();
 
    void publish(const iTargetInfo& t);
+   void publishTo(targetCatalog& other);
    iTarget *create(const std::string& name);
 
 private:
@@ -169,14 +171,6 @@ class targetChainBuilder {
 public:
    void build(config& c, targetCatalog& f, const std::string& finalTarget, targetChain& tc);
 };
-
-// simple "steps" outside the passManager??
-// - default target selection pass
-// - file loading pass
-// passes:
-// - table generation pass
-// - obfuscation pass
-//   ....
 
 } // namespace pass
 } // namespace prattle

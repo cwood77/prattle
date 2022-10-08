@@ -32,6 +32,12 @@ void passCatalog::publish(const iPassInfo& p)
    m_catalog[p.getName()] = &p;
 }
 
+void passCatalog::publishTo(passCatalog& other)
+{
+   for(auto it=m_catalog.begin();it!=m_catalog.end();++it)
+      other.publish(*it->second);
+}
+
 phasePassCatalog passCatalog::getPhase(const std::string& phase)
 {
    return phasePassCatalog(phase,*this);
@@ -96,6 +102,12 @@ targetCatalog& targetCatalog::get()
 void targetCatalog::publish(const iTargetInfo& t)
 {
    m_cat[t.getName()] = &t;
+}
+
+void targetCatalog::publishTo(targetCatalog& other)
+{
+   for(auto it=m_cat.begin();it!=m_cat.end();++it)
+      other.publish(*it->second);
 }
 
 iTarget *targetCatalog::create(const std::string& name)
