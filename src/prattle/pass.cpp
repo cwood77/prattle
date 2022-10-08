@@ -48,7 +48,7 @@ const iPassInfo& passCatalog::demand(const std::string& name)
 {
    auto it = m_catalog.find(name);
    if(it == m_catalog.end())
-      throw std::runtime_error("pass not found");
+      throw std::runtime_error("pass not found: " + name);
    return *it->second;
 }
 

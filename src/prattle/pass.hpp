@@ -33,7 +33,7 @@ template<class T>
 class passInfo : public iPassInfo {
 public:
    passInfo(const std::string& phase, unsigned long priority, const std::string& name)
-   : m_phase(phase), m_priority(priority) {}
+   : m_phase(phase), m_priority(priority), m_name(name) {}
 
    virtual const std::string& getPhase() const { return m_phase; }
    virtual unsigned long getPriority() const { return m_priority; }
