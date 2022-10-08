@@ -18,7 +18,7 @@ public:
 class moduleLoader {
 public:
    ~moduleLoader();
-   void tryLoad(const std::string& name);
+   bool tryLoad(const std::string& name);
    void collect(pass::passCatalog& p, pass::targetCatalog& t);
 
 private:
@@ -29,12 +29,13 @@ private:
 
 class loadingTargetFactory : public pass::iTargetFactory {
 public:
-   loadingTargetFactory(pass::targetCatalog& tCat, moduleLoader& mLdr)
-   : m_tCat(tCat), m_mLdr(mLdr) {}
+   loadingTargetFactory(pass::passCatalog& p, pass::targetCatalog& tCat, moduleLoader& mLdr)
+   : m_pCat(p), m_tCat(tCat), m_mLdr(mLdr) {}
 
    virtual pass::iTarget *create(const std::string& name);
 
 private:
+   pass::passCatalog& m_pCat;
    pass::targetCatalog& m_tCat;
    moduleLoader& m_mLdr;
 };

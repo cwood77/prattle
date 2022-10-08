@@ -10,21 +10,21 @@ moduleLoader::~moduleLoader()
       ::FreeLibrary(h);
 }
 
-void moduleLoader::tryLoad(const std::string& name)
+bool moduleLoader::tryLoad(const std::string& name)
 {
    if(m_loaded.find(name)!=m_loaded.end())
-      return; // already loaded
+      return false; // already loaded
    m_loaded.insert(name);
 
    HINSTANCE h = ::LoadLibraryA(name.c_str());
    if(!h)
-      return; // not a DLL?
+      return false; // not a DLL?
    m_libs.push_back(h);
 
    typedef iModule *(*createFunc_t)();
    auto pFunc = (createFunc_t)::GetProcAddress(h,"_Z12createModulev");
    if(!pFunc)
-      return; // not a module
+      return false; // not a module
 
    std::cout << "  loaded module " << name << std::endl;
    iModule *pMod = pFunc();
@@ -34,12 +34,15 @@ void moduleLoader::tryLoad(const std::string& name)
    pMod->solicit(depMods);
    for(auto n : depMods)
       tryLoad(n);
+
+   return true;
 }
 
 void moduleLoader::collect(pass::passCatalog& p, pass::targetCatalog& t)
 {
    for(auto *pM : m_mods)
       pM->collect(p,t);
+   m_mods.clear(); // don't collect these modules a second time
 }
 
 pass::iTarget *loadingTargetFactory::create(const std::string& name)
@@ -47,7 +50,11 @@ pass::iTarget *loadingTargetFactory::create(const std::string& name)
    auto *t = m_tCat.tryCreate(name);
    if(t)
       return t;
-   m_mLdr.tryLoad(name);
+   if(m_mLdr.tryLoad(name+".dll"))
+   {
+      std::cout << "   (lazy-loaded looking for target " << name << ")" << std::endl;
+      m_mLdr.collect(m_pCat,m_tCat);
+   }
    return m_tCat.create(name);
 }
 
