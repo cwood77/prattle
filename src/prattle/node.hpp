@@ -54,6 +54,8 @@ public:
    template<class T> T& appendChild() { auto *p = new T(); appendChild(*p); return *p; }
 
    std::vector<node*>& getChildren() { return m_children; }
+   node *getParent() { return m_pParent; }
+   node& demandParent();
    node& getRoot() { return m_pParent ? m_pParent->getRoot() : *this; }
 
    template<class T> T& demandAncestor()
@@ -102,6 +104,10 @@ public:
    // lexical breadcrumbs
    std::string filePath;
    unsigned long lineNumber;
+
+   void Delete();
+   void replace(node& n);
+   template<class T> T& replaceChild() { auto *p = new T(); replaceChild(*p); return *p; }
 
 private:
    std::vector<node*> m_children;

@@ -21,4 +21,43 @@ void node::appendChild(node& n)
    m_children.push_back(&n);
 }
 
+node& node::demandParent()
+{
+   if(m_pParent == NULL)
+      throw std::runtime_error("parent node required");
+   return *m_pParent;
+}
+
+void node::Delete()
+{
+   auto& children = demandParent().getChildren();
+   for(auto it=children.begin();it!=children.end();++it)
+   {
+      if(*it == this)
+      {
+         children.erase(it);
+         delete this;
+         return;
+      }
+   }
+   throw std::runtime_error("ise");
+}
+
+void node::replace(node& n)
+{
+   auto& p = demandParent();
+   auto& children = p.getChildren();
+   for(auto it=children.begin();it!=children.end();++it)
+   {
+      if(*it == this)
+      {
+         *it = &n;
+         n.m_pParent = &p;
+         delete this;
+         return;
+      }
+   }
+   throw std::runtime_error("ise");
+}
+
 } // namespace prattle
