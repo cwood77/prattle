@@ -1,4 +1,5 @@
 #include "module.hpp"
+#include <iostream>
 
 namespace prattle {
 namespace module {
@@ -21,10 +22,11 @@ void moduleLoader::tryLoad(const std::string& name)
    m_libs.push_back(h);
 
    typedef iModule *(*createFunc_t)();
-   auto pFunc = (createFunc_t)::GetProcAddress(h,"asdasdad");
+   auto pFunc = (createFunc_t)::GetProcAddress(h,"_Z12createModulev");
    if(!pFunc)
       return; // not a module
 
+   std::cout << "  loaded module " << name << std::endl;
    iModule *pMod = pFunc();
    m_mods.push_back(pMod);
 

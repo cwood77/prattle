@@ -36,4 +36,4 @@ private:
 } // namespace prattle
 
 #define cdwImplModule(__mod__) \
-__declspec(dllexport) prattle::module::iModule *createModule() { return __mod__; }
+__declspec(dllexport) prattle::module::iModule *createModule() { return &__mod__; }
