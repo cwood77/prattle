@@ -30,6 +30,13 @@ node& node::demandParent()
 
 void node::Delete()
 {
+   nodeEditCollector*& pHead = nodeEditCollector::head();
+   if(pHead)
+   {
+      pHead->op.Delete(*this);
+      return;
+   }
+
    auto& children = demandParent().getChildren();
    for(auto it=children.begin();it!=children.end();++it)
    {
@@ -45,6 +52,13 @@ void node::Delete()
 
 void node::replace(node& n)
 {
+   nodeEditCollector*& pHead = nodeEditCollector::head();
+   if(pHead)
+   {
+      pHead->op.replace(*this,n);
+      return;
+   }
+
    auto& p = demandParent();
    auto& children = p.getChildren();
    for(auto it=children.begin();it!=children.end();++it)
@@ -58,6 +72,56 @@ void node::replace(node& n)
       }
    }
    throw std::runtime_error("ise");
+}
+
+nodeEditOperation::~nodeEditOperation()
+{
+   for(auto it=m_replaces.begin();it!=m_replaces.end();++it)
+      delete it->second;
+}
+
+void nodeEditOperation::Delete(node& old)
+{
+   m_deletes.push_back(&old);
+}
+
+void nodeEditOperation::replace(node& old, node& nu)
+{
+   m_replaces.push_back(std::make_pair<node*,node*>(&old,&nu));
+}
+
+void nodeEditOperation::commit()
+{
+   // commit replaces
+   for(auto it=m_replaces.begin();it!=m_replaces.end();++it)
+      it->first->replace(*it->second);
+   m_replaces.clear();
+
+   // commit deletes
+   for(auto it=m_deletes.begin();it!=m_deletes.end();++it)
+      (*it)->Delete();
+   m_deletes.clear();
+}
+
+nodeEditCollector*& nodeEditCollector::head()
+{
+   static nodeEditCollector *the(NULL);
+   return the;
+}
+
+nodeEditCollector::nodeEditCollector(nodeEditOperation& op)
+: op(op)
+, m_pPrev(NULL)
+{
+   nodeEditCollector*& pPtr = head();
+   m_pPrev = pPtr;
+   pPtr = this;
+}
+
+nodeEditCollector::~nodeEditCollector()
+{
+   nodeEditCollector*& pPtr = head();
+   pPtr = m_pPrev;
 }
 
 } // namespace prattle

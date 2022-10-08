@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <list>
 #include <map>
 #include <stdexcept>
 #include <vector>
@@ -122,5 +123,31 @@ public: \
    virtual const char *getName() const { return #__name__; } \
    virtual void acceptVisitor(iNodeVisitor& v) \
    { visitorAcceptor<__visitor__>(v).tryVisit(this); } \
+
+class nodeEditOperation {
+public:
+   ~nodeEditOperation();
+
+   void Delete(node& old);
+   void replace(node& old, node& nu);
+   void commit();
+
+private:
+   std::list<node*> m_deletes;
+   std::list<std::pair<node*,node*> > m_replaces;
+};
+
+class nodeEditCollector {
+public:
+   static nodeEditCollector*& head();
+
+   explicit nodeEditCollector(nodeEditOperation& op);
+   ~nodeEditCollector();
+
+   nodeEditOperation& op;
+
+private:
+   nodeEditCollector *m_pPrev;
+};
 
 } // namespace prattle
