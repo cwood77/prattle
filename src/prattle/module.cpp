@@ -51,10 +51,7 @@ pass::iTarget *loadingTargetFactory::create(const std::string& name)
    if(t)
       return t;
    if(m_mLdr.tryLoad(name+".dll"))
-   {
-      std::cout << "   (lazy-loaded looking for target " << name << ")" << std::endl;
       m_mLdr.collect(m_pCat,m_tCat);
-   }
    return m_tCat.create(name);
 }
 

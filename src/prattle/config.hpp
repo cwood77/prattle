@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <typeinfo>
@@ -9,11 +10,13 @@ namespace prattle {
 class iSetting {
 public:
    virtual ~iSetting() {}
+   virtual void dump(std::ostream& s) = 0;
 };
 
 class stringSetting : public iSetting {
 public:
    std::string value;
+   virtual void dump(std::ostream& s);
 };
 
 class config {
@@ -40,6 +43,8 @@ public:
          pVal = new T();
       return *dynamic_cast<T*>(pVal);
    }
+
+   void dump(std::ostream& s);
 
 private:
    template<class T>
