@@ -10,6 +10,7 @@ PRATTLE_HDR = \
 	src/prattle/config.hpp \
 	src/prattle/lexor.hpp \
 	src/prattle/loader.hpp \
+	src/prattle/log.hpp \
 	src/prattle/module.hpp \
 	src/prattle/node.hpp \
 	src/prattle/pass.hpp \
