@@ -108,7 +108,9 @@ public:
 
    void Delete();
    void replace(node& n);
-   template<class T> T& replaceChild() { auto *p = new T(); replaceChild(*p); return *p; }
+   template<class T> T& replace() { auto *p = new T(); replace(*p); return *p; }
+   void reparent(node& newParent, node *pAfterSibling = NULL);
+   void reparentChildren(node& newParent, node *pAfterSibling = NULL);
 
 private:
    std::vector<node*> m_children;
@@ -130,11 +132,13 @@ public:
 
    void Delete(node& old);
    void replace(node& old, node& nu);
+   void reparent(node& n, node& newParent, node *pAfterSibling = NULL);
    void commit();
 
 private:
    std::list<node*> m_deletes;
    std::list<std::pair<node*,node*> > m_replaces;
+   std::list<std::pair<node*,std::pair<node*,node*> > > m_reparents;
 };
 
 class nodeEditCollector {

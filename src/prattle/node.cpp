@@ -74,6 +74,49 @@ void node::replace(node& n)
    throw std::runtime_error("ise");
 }
 
+void node::reparent(node& newParent, node *pAfterSibling)
+{
+   if(!pAfterSibling)
+      throw std::runtime_error("reparent with no afterSibling unimplemented");
+
+   nodeEditCollector*& pHead = nodeEditCollector::head();
+   if(pHead)
+   {
+      pHead->op.reparent(*this,newParent,pAfterSibling);
+      return;
+   }
+
+   // unhook myself from my current parent
+   {
+      auto& children = demandParent().getChildren();
+      for(auto it=children.begin();it!=children.end();++it)
+         if(*it == this)
+            children.erase(it);
+   }
+
+   // sign up with my new parent
+   {
+      auto& children = newParent.getChildren();
+      for(auto it=children.begin();it!=children.end();++it)
+      {
+         if(*it == pAfterSibling)
+         {
+            ++it; // C++ insert takes a 'before' iterator
+            children.insert(it, this);
+            this->m_pParent = &newParent;
+         }
+      }
+      throw std::runtime_error("can't find afterSibling in reparent");
+   }
+}
+
+void node::reparentChildren(node& newParent, node *pAfterSibling)
+{
+   std::vector<node*> copy = m_children;
+   for(auto it=copy.rbegin();it!=copy.rend();++it)
+      (*it)->reparent(newParent,pAfterSibling);
+}
+
 nodeEditOperation::~nodeEditOperation()
 {
    for(auto it=m_replaces.begin();it!=m_replaces.end();++it)
@@ -90,6 +133,14 @@ void nodeEditOperation::replace(node& old, node& nu)
    m_replaces.push_back(std::make_pair<node*,node*>(&old,&nu));
 }
 
+void nodeEditOperation::reparent(node& n, node& newParent, node *pAfterSibling)
+{
+   m_reparents.push_back(
+      std::make_pair<node*,std::pair<node*,node*> >(
+         &n,
+         std::make_pair<node*,node*>(&newParent,&*pAfterSibling)));
+}
+
 void nodeEditOperation::commit()
 {
    // commit replaces
@@ -101,6 +152,11 @@ void nodeEditOperation::commit()
    for(auto it=m_deletes.begin();it!=m_deletes.end();++it)
       (*it)->Delete();
    m_deletes.clear();
+
+   // commit reparents
+   for(auto it=m_reparents.begin();it!=m_reparents.end();++it)
+      it->first->reparent(*it->second.first,it->second.second);
+   m_reparents.clear();
 }
 
 nodeEditCollector*& nodeEditCollector::head()
