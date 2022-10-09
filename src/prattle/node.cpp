@@ -90,8 +90,13 @@ void node::reparent(node& newParent, node *pAfterSibling)
    {
       auto& children = demandParent().getChildren();
       for(auto it=children.begin();it!=children.end();++it)
+      {
          if(*it == this)
+         {
             children.erase(it);
+            break;
+         }
+      }
    }
 
    // sign up with my new parent
@@ -104,6 +109,7 @@ void node::reparent(node& newParent, node *pAfterSibling)
             ++it; // C++ insert takes a 'before' iterator
             children.insert(it, this);
             this->m_pParent = &newParent;
+            return;
          }
       }
       throw std::runtime_error("can't find afterSibling in reparent");
@@ -143,6 +149,11 @@ void nodeEditOperation::reparent(node& n, node& newParent, node *pAfterSibling)
 
 void nodeEditOperation::commit()
 {
+   // commit reparents
+   for(auto it=m_reparents.begin();it!=m_reparents.end();++it)
+      it->first->reparent(*it->second.first,it->second.second);
+   m_reparents.clear();
+
    // commit replaces
    for(auto it=m_replaces.begin();it!=m_replaces.end();++it)
       it->first->replace(*it->second);
@@ -152,11 +163,6 @@ void nodeEditOperation::commit()
    for(auto it=m_deletes.begin();it!=m_deletes.end();++it)
       (*it)->Delete();
    m_deletes.clear();
-
-   // commit reparents
-   for(auto it=m_reparents.begin();it!=m_reparents.end();++it)
-      it->first->reparent(*it->second.first,it->second.second);
-   m_reparents.clear();
 }
 
 nodeEditCollector*& nodeEditCollector::head()
