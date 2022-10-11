@@ -71,19 +71,21 @@ public:
       throw std::runtime_error("ancestor not found");
    }
 
-   template<class T> void searchDown(std::function<bool(T&)> pred, std::vector<T*>& ans)
+   template<class T> void searchDown(
+      std::vector<T*>& ans,
+      std::function<bool(T&)> pred = [](auto&){ return true; })
    {
       T *pD = dynamic_cast<T*>(this);
       if(pD && pred(*pD))
          ans.push_back(pD);
       for(auto *pChild : m_children)
-         pChild->searchDown<T>(pred,ans);
+         pChild->searchDown<T>(ans,pred);
    }
 
    template<class T> T *findDown(std::function<bool(T&)> pred = [](auto&){ return true; })
    {
       std::vector<T*> ans;
-      searchDown<T>(pred,ans);
+      searchDown<T>(ans,pred);
       if(ans.size() == 0)
          return NULL;
       if(ans.size() > 1)
