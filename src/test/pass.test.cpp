@@ -1,4 +1,5 @@
 #include "../prattle/config.hpp"
+#include "../prattle/module.hpp"
 #include "../prattle/pass.hpp"
 #include <stdexcept>
 
@@ -11,10 +12,14 @@ namespace {
 
 class dummyPass : public iPass {
 public:
-   virtual void run(config& c, void *_pIr)
+   virtual void run(config& c, passLinks& l, void *_pIr)
    {
       auto *pIr = (size_t*)_pIr;
       *pIr += 2;
+
+      auto *pPrev = l.findLink<dummyPass>();
+      if(pPrev)
+         *pIr += 1;
    }
 };
 
@@ -45,7 +50,7 @@ class typicalStuff : public iTarget {
 public:
    virtual void configure(config& c) {}
    virtual std::string getPredecessorTarget() { return ""; }
-   virtual void adjustPasses(passCatalog& c, passSchedule& s) {}
+   virtual void adjustPasses(module::moduleLoader&, passCatalog& c, passSchedule& s) {}
 };
 
 cdwExportTarget(typicalStuff);
@@ -54,10 +59,10 @@ class dotTarget : public iTarget {
 public:
    virtual void configure(config& c) {}
    virtual std::string getPredecessorTarget() { return "typicalStuff"; }
-   virtual void adjustPasses(passCatalog& c, passSchedule& s)
+   virtual void adjustPasses(module::moduleLoader&, passCatalog& c, passSchedule& s)
    {
-      s.append(c.demand<dummyPass>());
-      s.append(c.demand(typeid(dummyPass).name()));
+      s.append(c.demand("dummyPass"));
+      s.append(c.demand("dummyPass"));
    }
 };
 
@@ -70,6 +75,22 @@ void targetTest()
    targetChain tc;
    targetChainBuilder().build(cfg,tf,"dot",tc);
    if(tc.tgts.size() != 2)
+      throw std::runtime_error("fail");
+
+   module::moduleLoader mLdr;
+   auto& pc = passCatalog::get();
+   passSchedule sched;
+   tc.adjustPasses(mLdr,pc,sched);
+   if(sched.get().size() != 2)
+      throw std::runtime_error("fail");
+
+   passRunChain rc;
+   passScheduler().inflate(sched,rc);
+
+   size_t ir = 4;
+   size_t *pIr = &ir;
+   passManager().run(cfg,rc,pIr);
+   if(ir != 9)
       throw std::runtime_error("fail");
 }
 

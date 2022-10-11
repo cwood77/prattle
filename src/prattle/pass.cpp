@@ -1,7 +1,6 @@
 #include "pass.hpp"
 #include <iostream>
 #include <set>
-#include <stdexcept>
 
 namespace prattle {
 namespace pass {
@@ -70,10 +69,12 @@ passRunChain::~passRunChain()
 
 void passRunChain::run(config& c, void *pIr)
 {
+   passLinks links;
    for(auto *pP : passes)
    {
       std::cout << "running pass " << pP->getInfo().getName() << std::endl;
-      pP->run(c,pIr);
+      pP->run(c,links,pIr);
+      links.publish(*pP);
    }
 }
 
@@ -136,12 +137,12 @@ targetChain::~targetChain()
       delete pTgt;
 }
 
-void targetChain::adjustPasses(passCatalog& c, passSchedule& s)
+void targetChain::adjustPasses(module::moduleLoader& mLdr, passCatalog& c, passSchedule& s)
 {
    for(auto *pTgt : tgts)
    {
       std::cout << "gathering passes from target " << pTgt->getInfo().getName() << std::endl;
-      pTgt->adjustPasses(c,s);
+      pTgt->adjustPasses(mLdr,c,s);
    }
 }
 

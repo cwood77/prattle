@@ -1,22 +1,52 @@
 #pragma once
 #include <list>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <typeinfo>
 
 namespace prattle {
+namespace module { class moduleLoader; }
 
 class config;
 
 namespace pass {
 
+class iPass;
 class iPassInfo;
+
+class passLinks {
+public:
+   void publish(iPass& p) { m_passes.push_front(&p); }
+
+   template<class T> T& demandLink()
+   {
+      T *pLnk = findLink<T>();
+      if(!pLnk)
+         throw std::runtime_error(std::string("cannot satisfy link: ") + typeid(T).name());
+      return *pLnk;
+   }
+
+   template<class T> T *findLink()
+   {
+      for(auto *pPass : m_passes)
+      {
+         T *pP = dynamic_cast<T*>(pPass);
+         if(pP)
+            return pP;
+      }
+      return NULL;
+   }
+
+private:
+   std::list<iPass*> m_passes;
+};
 
 class iPass {
 public:
    virtual ~iPass() {}
    const iPassInfo& getInfo() const { return *m_pInfo; }
-   virtual void run(config& c, void *pIr) = 0;
+   virtual void run(config& c, passLinks& l, void *pIr) = 0;
 
    const iPassInfo *m_pInfo;
 };
@@ -56,7 +86,6 @@ public:
    void publishTo(passCatalog& other);
    phasePassCatalog getPhase(const std::string& phase);
 
-   template<class T> const iPassInfo& demand() { return demand(typeid(T).name()); }
    const iPassInfo& demand(const std::string& name);
 
 private:
@@ -128,7 +157,7 @@ public:
    const iTargetInfo& getInfo() const { return *m_pInfo; }
    virtual void configure(config& c) = 0;
    virtual std::string getPredecessorTarget() = 0;
-   virtual void adjustPasses(passCatalog& c, passSchedule& s) = 0;
+   virtual void adjustPasses(module::moduleLoader& mLdr, passCatalog& c, passSchedule& s) = 0;
 
    const iTargetInfo *m_pInfo;
 };
@@ -185,7 +214,7 @@ class targetChain {
 public:
    ~targetChain();
 
-   void adjustPasses(passCatalog& c, passSchedule& s);
+   void adjustPasses(module::moduleLoader& mLdr, passCatalog& c, passSchedule& s);
 
    std::list<iTarget*> tgts;
 };
