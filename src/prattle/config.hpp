@@ -59,7 +59,7 @@ public:
    }
 
    template<class T>
-   T& createOrFetch(const std::string& name, std::function<T&>& setter = [](auto&){})
+   T& createOrFetch(const std::string& name, std::function<void(T&)> setter = [](auto&){})
    {
       iSetting*& pVal = m_settings[makeKey<T>(name)];
       if(!pVal)
