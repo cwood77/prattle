@@ -137,7 +137,7 @@ targetChain::~targetChain()
       delete pTgt;
 }
 
-void targetChain::adjustPasses(module::moduleLoader& mLdr, passCatalog& c, passSchedule& s)
+void targetChain::adjustPasses(module::incrementalModuleLoader& mLdr, passCatalog& c, passSchedule& s)
 {
    for(auto *pTgt : tgts)
    {

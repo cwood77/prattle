@@ -50,7 +50,7 @@ class typicalStuff : public iTarget {
 public:
    virtual void configure(config& c) {}
    virtual std::string getPredecessorTarget() { return ""; }
-   virtual void adjustPasses(module::moduleLoader&, passCatalog& c, passSchedule& s) {}
+   virtual void adjustPasses(module::incrementalModuleLoader&, passCatalog& c, passSchedule& s) {}
 };
 
 cdwExportTarget(typicalStuff);
@@ -59,7 +59,7 @@ class dotTarget : public iTarget {
 public:
    virtual void configure(config& c) {}
    virtual std::string getPredecessorTarget() { return "typicalStuff"; }
-   virtual void adjustPasses(module::moduleLoader&, passCatalog& c, passSchedule& s)
+   virtual void adjustPasses(module::incrementalModuleLoader&, passCatalog& c, passSchedule& s)
    {
       s.append(c.demand("dummyPass"));
       s.append(c.demand("dummyPass"));
@@ -79,8 +79,9 @@ void targetTest()
 
    module::moduleLoader mLdr;
    auto& pc = passCatalog::get();
+   module::incrementalModuleLoader imLdr(pc,tf,mLdr);
    passSchedule sched;
-   tc.adjustPasses(mLdr,pc,sched);
+   tc.adjustPasses(imLdr,pc,sched);
    if(sched.get().size() != 2)
       throw std::runtime_error("fail");
 

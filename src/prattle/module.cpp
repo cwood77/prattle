@@ -45,13 +45,18 @@ void moduleLoader::collect(pass::passCatalog& p, pass::targetCatalog& t)
    m_mods.clear(); // don't collect these modules a second time
 }
 
+void incrementalModuleLoader::tryLoad(const std::string& name)
+{
+   if(m_mLdr.tryLoad(name))
+      m_mLdr.collect(m_pCat,m_tCat);
+}
+
 pass::iTarget *loadingTargetFactory::create(const std::string& name)
 {
    auto *t = m_tCat.tryCreate(name);
    if(t)
       return t;
-   if(m_mLdr.tryLoad(name+".dll"))
-      m_mLdr.collect(m_pCat,m_tCat);
+   m_imLdr.tryLoad(name+".dll");
    return m_tCat.create(name);
 }
 

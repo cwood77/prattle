@@ -6,7 +6,7 @@
 #include <typeinfo>
 
 namespace prattle {
-namespace module { class moduleLoader; }
+namespace module { class incrementalModuleLoader; }
 
 class config;
 
@@ -157,7 +157,7 @@ public:
    const iTargetInfo& getInfo() const { return *m_pInfo; }
    virtual void configure(config& c) = 0;
    virtual std::string getPredecessorTarget() = 0;
-   virtual void adjustPasses(module::moduleLoader& mLdr, passCatalog& c, passSchedule& s) = 0;
+   virtual void adjustPasses(module::incrementalModuleLoader& mLdr, passCatalog& c, passSchedule& s) = 0;
 
    const iTargetInfo *m_pInfo;
 };
@@ -214,7 +214,7 @@ class targetChain {
 public:
    ~targetChain();
 
-   void adjustPasses(module::moduleLoader& mLdr, passCatalog& c, passSchedule& s);
+   void adjustPasses(module::incrementalModuleLoader& mLdr, passCatalog& c, passSchedule& s);
 
    std::list<iTarget*> tgts;
 };

@@ -27,17 +27,29 @@ private:
    std::list<iModule*> m_mods;
 };
 
-class loadingTargetFactory : public pass::iTargetFactory {
+class incrementalModuleLoader {
 public:
-   loadingTargetFactory(pass::passCatalog& p, pass::targetCatalog& tCat, moduleLoader& mLdr)
+   incrementalModuleLoader(pass::passCatalog& p, pass::targetCatalog& tCat, moduleLoader& mLdr)
    : m_pCat(p), m_tCat(tCat), m_mLdr(mLdr) {}
 
-   virtual pass::iTarget *create(const std::string& name);
+   void tryLoad(const std::string& name);
 
 private:
    pass::passCatalog& m_pCat;
    pass::targetCatalog& m_tCat;
    moduleLoader& m_mLdr;
+};
+
+class loadingTargetFactory : public pass::iTargetFactory {
+public:
+   explicit loadingTargetFactory(pass::targetCatalog& tCat, incrementalModuleLoader& iml)
+   : m_tCat(tCat), m_imLdr(iml) {}
+
+   virtual pass::iTarget *create(const std::string& name);
+
+private:
+   pass::targetCatalog& m_tCat;
+   incrementalModuleLoader& m_imLdr;
 };
 
 } // namespace module
