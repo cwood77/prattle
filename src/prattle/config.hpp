@@ -65,7 +65,7 @@ public:
       if(!pVal)
       {
          pVal = new T();
-         setter(*pVal);
+         setter(*dynamic_cast<T*>(pVal));
       }
       return *dynamic_cast<T*>(pVal);
    }
