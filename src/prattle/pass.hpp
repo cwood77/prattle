@@ -7,13 +7,17 @@
 
 namespace prattle {
 namespace module { class incrementalModuleLoader; }
-
 class config;
-
 namespace pass {
+
+// ---------- pass, passInfo, linking ----------
+
+// passes are globally registered (typically), can be linked, and decomposed
+// passes are called either by group in priority order, or explicitly by targets
 
 class iPass;
 class iPassInfo;
+class passCatalog;
 
 class passLinks {
 public:
@@ -46,6 +50,7 @@ class iPass {
 public:
    virtual ~iPass() {}
    const iPassInfo& getInfo() const { return *m_pInfo; }
+   virtual void decompose(passCatalog&, std::list<iPass*>& updated) { updated.push_back(this); }
    virtual void run(config& c, passLinks& l, void *pIr) = 0;
 
    const iPassInfo *m_pInfo;
@@ -75,6 +80,8 @@ private:
    unsigned long m_priority;
    std::string m_name;
 };
+
+// ---------- pass catalogs ----------
 
 class phasePassCatalog;
 
@@ -117,6 +124,8 @@ public:
 #define cdwExportPass(__name__,__phase__,__priority__) \
    static autoPassInfo<__name__> g##__name__(__phase__,__priority__,#__name__);
 
+// ---------- pass schedule, runChain, scheduler ----------
+
 class passSchedule {
 public:
    void append(const iPassInfo& i) { m_sched.push_back(&i); }
@@ -140,7 +149,10 @@ class passScheduler {
 public:
    void schedule(phasePassCatalog& c, passSchedule& s);
    void inflate(const passSchedule& s, passRunChain& c);
+   void decompose(passCatalog& pc, passRunChain& c);
 };
+
+// ---------- pass manager (execution) ----------
 
 class passManager {
 public:
@@ -148,6 +160,11 @@ public:
    void run(config& c, passRunChain& rc)
    { void *pUnused = NULL; run(c,rc,pUnused); }
 };
+
+// ---------- target, target info ----------
+
+// targets can be configued, and indicate a single predecessor target
+// targets are called in order to determine the pass schedule
 
 class iTargetInfo;
 
@@ -181,6 +198,8 @@ private:
    std::string m_name;
 };
 
+// ---------- target catalog ----------
+
 class iTargetFactory {
 public:
    virtual iTarget *create(const std::string& name) = 0;
@@ -209,6 +228,8 @@ public:
 
 #define cdwExportTarget(__name__) \
    static autoTargetInfo<__name__> g##__name__(#__name__);
+
+// ---------- target chain ----------
 
 class targetChain {
 public:

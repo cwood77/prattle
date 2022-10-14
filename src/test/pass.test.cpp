@@ -35,6 +35,7 @@ void passManagerTest()
 
    passRunChain rc;
    passScheduler().inflate(sched,rc);
+   passScheduler().decompose(pc,rc);
 
    config cfg;
    size_t ir = 4;

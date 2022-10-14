@@ -93,6 +93,14 @@ void passScheduler::inflate(const passSchedule& s, passRunChain& c)
       c.passes.push_back(pPi->create());
 }
 
+void passScheduler::decompose(passCatalog& pc, passRunChain& c)
+{
+   std::list<iPass*> updated;
+   for(auto *pP : c.passes)
+      pP->decompose(pc,updated);
+   c.passes = updated;
+}
+
 void passManager::run(config& c, passRunChain& rc, void *pIr)
 {
    rc.run(c,pIr);
