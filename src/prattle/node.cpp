@@ -76,9 +76,6 @@ void node::replace(node& n)
 
 void node::reparent(node& newParent, node *pAfterSibling)
 {
-   if(!pAfterSibling)
-      throw std::runtime_error("reparent with no afterSibling unimplemented");
-
    nodeEditCollector*& pHead = nodeEditCollector::head();
    if(pHead)
    {
@@ -101,18 +98,26 @@ void node::reparent(node& newParent, node *pAfterSibling)
 
    // sign up with my new parent
    {
-      auto& children = newParent.getChildren();
-      for(auto it=children.begin();it!=children.end();++it)
+      if(pAfterSibling)
       {
-         if(*it == pAfterSibling)
+         auto& children = newParent.getChildren();
+         for(auto it=children.begin();it!=children.end();++it)
          {
-            ++it; // C++ insert takes a 'before' iterator
-            children.insert(it, this);
-            this->m_pParent = &newParent;
-            return;
+            if(*it == pAfterSibling)
+            {
+               ++it; // C++ insert takes a 'before' iterator
+               children.insert(it, this);
+               this->m_pParent = &newParent;
+               return;
+            }
          }
+         throw std::runtime_error("can't find afterSibling in reparent");
       }
-      throw std::runtime_error("can't find afterSibling in reparent");
+      else
+      {
+         newParent.getChildren().push_back(this);
+         this->m_pParent = &newParent;
+      }
    }
 }
 
@@ -144,7 +149,7 @@ void nodeEditOperation::reparent(node& n, node& newParent, node *pAfterSibling)
    m_reparents.push_back(
       std::make_pair<node*,std::pair<node*,node*> >(
          &n,
-         std::make_pair<node*,node*>(&newParent,&*pAfterSibling)));
+         std::make_pair(&newParent,pAfterSibling)));
 }
 
 void nodeEditOperation::commit()
