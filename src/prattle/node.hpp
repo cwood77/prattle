@@ -135,12 +135,14 @@ public:
    void Delete(node& old);
    void replace(node& old, node& nu);
    void reparent(node& n, node& newParent, node *pAfterSibling = NULL);
+   void reparentChildren(node& n, node& newParent, node *pAfterSibling = NULL);
    void commit();
 
 private:
    std::list<node*> m_deletes;
    std::list<std::pair<node*,node*> > m_replaces;
    std::list<std::pair<node*,std::pair<node*,node*> > > m_reparents;
+   std::list<std::pair<node*,std::pair<node*,node*> > > m_reparentChildren;
 };
 
 class nodeEditCollector {

@@ -123,6 +123,13 @@ void node::reparent(node& newParent, node *pAfterSibling)
 
 void node::reparentChildren(node& newParent, node *pAfterSibling)
 {
+   nodeEditCollector*& pHead = nodeEditCollector::head();
+   if(pHead)
+   {
+      pHead->op.reparentChildren(*this,newParent,pAfterSibling);
+      return;
+   }
+
    std::vector<node*> copy = m_children;
    for(auto it=copy.rbegin();it!=copy.rend();++it)
       (*it)->reparent(newParent,pAfterSibling);
@@ -152,9 +159,20 @@ void nodeEditOperation::reparent(node& n, node& newParent, node *pAfterSibling)
          std::make_pair(&newParent,pAfterSibling)));
 }
 
+void nodeEditOperation::reparentChildren(node& n, node& newParent, node *pAfterSibling)
+{
+   m_reparentChildren.push_back(
+      std::make_pair<node*,std::pair<node*,node*> >(
+         &n,
+         std::make_pair(&newParent,pAfterSibling)));
+}
+
 void nodeEditOperation::commit()
 {
    // commit reparents
+   for(auto it=m_reparentChildren.begin();it!=m_reparentChildren.end();++it)
+      it->first->reparentChildren(*it->second.first,it->second.second);
+   m_reparentChildren.clear();
    for(auto it=m_reparents.begin();it!=m_reparents.end();++it)
       it->first->reparent(*it->second.first,it->second.second);
    m_reparents.clear();
