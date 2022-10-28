@@ -55,6 +55,7 @@ public:
    template<class T> T& appendChild() { auto *p = new T(); appendChild(*p); return *p; }
 
    std::vector<node*>& getChildren() { return m_children; }
+   size_t getIndexOfChild(node& child);
    node *getParent() { return m_pParent; }
    node& demandParent();
    node& getRoot() { return m_pParent ? m_pParent->getRoot() : *this; }

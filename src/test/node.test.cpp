@@ -62,6 +62,12 @@ void nodeTest()
    if(&x != &h)
       throw std::runtime_error("fail");
 
+   // children
+   if(h.getIndexOfChild(l) != 0)
+      throw std::runtime_error("getIndexOfChild 0");
+   if(h.getIndexOfChild(r) != 1)
+      throw std::runtime_error("getIndexOfChild 1");
+
    // ancestors
    auto &y = r.demandAncestor<rootNode>();
    if(&y != &h)

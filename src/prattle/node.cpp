@@ -21,6 +21,16 @@ void node::appendChild(node& n)
    m_children.push_back(&n);
 }
 
+size_t node::getIndexOfChild(node& child)
+{
+   size_t idx = 0;
+   for(auto it=m_children.begin();it!=m_children.end();++it,idx++)
+      if(*it == &child)
+         return idx;
+
+   throw std::runtime_error("child not found in getIndexOfChild");
+}
+
 node& node::demandParent()
 {
    if(m_pParent == NULL)
