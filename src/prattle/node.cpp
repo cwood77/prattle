@@ -167,6 +167,11 @@ void nodeEditOperation::reparentChildren(node& n, node& newParent, node *pAfterS
          std::make_pair(&newParent,pAfterSibling)));
 }
 
+void nodeEditOperation::defer(std::function<void(void)> f)
+{
+   m_defers.push_back(f);
+}
+
 void nodeEditOperation::commit()
 {
    // commit reparents
@@ -186,6 +191,10 @@ void nodeEditOperation::commit()
    for(auto it=m_deletes.begin();it!=m_deletes.end();++it)
       (*it)->Delete();
    m_deletes.clear();
+
+   // user-defined
+   for(auto f : m_defers)
+      f();
 }
 
 nodeEditCollector*& nodeEditCollector::head()

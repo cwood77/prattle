@@ -136,6 +136,7 @@ public:
    void replace(node& old, node& nu);
    void reparent(node& n, node& newParent, node *pAfterSibling = NULL);
    void reparentChildren(node& n, node& newParent, node *pAfterSibling = NULL);
+   void defer(std::function<void(void)> f);
    void commit();
 
 private:
@@ -143,6 +144,7 @@ private:
    std::list<std::pair<node*,node*> > m_replaces;
    std::list<std::pair<node*,std::pair<node*,node*> > > m_reparents;
    std::list<std::pair<node*,std::pair<node*,node*> > > m_reparentChildren;
+   std::list<std::function<void(void)> > m_defers;
 };
 
 class nodeEditCollector {

@@ -85,4 +85,16 @@ void nodeTest()
    h.acceptVisitor(v);
    if(v.s.str() != "rootNodeleftChildrightChild")
       throw std::runtime_error(v.s.str());
+
+   // operation
+   {
+      nodeEditOperation op;
+      bool foo = false;
+      op.defer([&](){ foo = true; });
+      if(foo)
+         throw std::runtime_error("op fired too soon!");
+      op.commit();
+      if(!foo)
+         throw std::runtime_error("op fired too late!");
+   }
 }
