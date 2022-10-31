@@ -141,8 +141,15 @@ void node::reparentChildren(node& newParent, node *pAfterSibling)
    }
 
    std::vector<node*> copy = m_children;
-   for(auto it=copy.rbegin();it!=copy.rend();++it)
-      (*it)->reparent(newParent,pAfterSibling);
+
+   if(pAfterSibling)
+      // when an aftersibling is used, iterate backwards to preserve
+      // order
+      for(auto it=copy.rbegin();it!=copy.rend();++it)
+         (*it)->reparent(newParent,pAfterSibling);
+   else
+      for(auto it=copy.begin();it!=copy.end();++it)
+         (*it)->reparent(newParent,pAfterSibling);
 }
 
 nodeEditOperation::~nodeEditOperation()
