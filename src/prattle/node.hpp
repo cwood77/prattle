@@ -138,7 +138,7 @@ public:
    void reparent(node& n, node& newParent, node *pAfterSibling = NULL);
    void reparentChildren(node& n, node& newParent, node *pAfterSibling = NULL);
    void defer(std::function<void(void)> f);
-   void commit();
+   size_t commit();
 
 private:
    std::list<node*> m_deletes;

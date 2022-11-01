@@ -189,29 +189,39 @@ void nodeEditOperation::defer(std::function<void(void)> f)
    m_defers.push_back(f);
 }
 
-void nodeEditOperation::commit()
+size_t nodeEditOperation::commit()
 {
+   size_t rval = 0;
+
    // commit reparents
    for(auto it=m_reparentChildren.begin();it!=m_reparentChildren.end();++it)
       it->first->reparentChildren(*it->second.first,it->second.second);
+   rval += m_reparentChildren.size();
    m_reparentChildren.clear();
    for(auto it=m_reparents.begin();it!=m_reparents.end();++it)
       it->first->reparent(*it->second.first,it->second.second);
+   rval += m_reparents.size();
    m_reparents.clear();
 
    // commit replaces
    for(auto it=m_replaces.begin();it!=m_replaces.end();++it)
       it->first->replace(*it->second);
+   rval += m_replaces.size();
    m_replaces.clear();
 
    // commit deletes
    for(auto it=m_deletes.begin();it!=m_deletes.end();++it)
       (*it)->Delete();
+   rval += m_deletes.size();
    m_deletes.clear();
 
    // user-defined
    for(auto f : m_defers)
       f();
+   rval += m_defers.size();
+   m_defers.clear();
+
+   return rval;
 }
 
 nodeEditCollector*& nodeEditCollector::head()
